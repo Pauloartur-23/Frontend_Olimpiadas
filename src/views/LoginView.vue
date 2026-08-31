@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { mdiAlertCircleOutline, mdiEmailOutline, mdiLockOutline, mdiLoginVariant } from '@mdi/js'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/services/api'
@@ -15,7 +15,7 @@ const password = ref('')
 const submitting = ref(false)
 const errorMessage = ref('')
 
-const redirectTo = computed(() => (typeof route.query.redirect === 'string' ? route.query.redirect : '/bolao'))
+const redirectTo = computed(() => (typeof route.query.redirect === 'string' ? route.query.redirect : '/'))
 
 function validate(): string | null {
   if (!email.value.trim()) return 'Informe seu e-mail.'
@@ -50,7 +50,7 @@ async function onSubmit() {
     </span>
     <h1 class="text-2xl font-bold tracking-tight">Entrar na conta</h1>
     <p class="mt-1 text-center text-sm text-neutral-500 dark:text-neutral-400">
-      Entre para apostar no Bolão dos Jogos e acompanhar sua classificação.
+      Entre com sua conta para acessar a área restrita.
     </p>
 
     <form class="card mt-6 w-full space-y-4 p-6" @submit.prevent="onSubmit">
@@ -94,12 +94,5 @@ async function onSubmit() {
         {{ submitting ? 'Entrando...' : 'Entrar' }}
       </button>
     </form>
-
-    <p class="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-      Ainda não tem conta?
-      <RouterLink :to="{ name: 'register', query: route.query }" class="font-semibold text-accent-600 hover:underline dark:text-accent-400">
-        Criar conta
-      </RouterLink>
-    </p>
   </div>
 </template>

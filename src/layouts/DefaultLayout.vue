@@ -8,7 +8,6 @@ import {
   mdiClipboardTextOutline,
   mdiClockOutline,
   mdiClose,
-  mdiDiceMultiple,
   mdiFormatListBulleted,
   mdiHome,
   mdiLoginVariant,
@@ -16,7 +15,6 @@ import {
   mdiMedal,
   mdiMenu,
   mdiShieldAccount,
-  mdiTargetAccount,
   mdiTrophy,
   mdiWeatherNight,
   mdiWhiteBalanceSunny,
@@ -41,7 +39,6 @@ const navLinks = [
   { to: '/equipes', label: 'Equipes', icon: mdiShieldAccount },
   { to: '/classificacao', label: 'Classificação', icon: mdiTrophy },
   { to: '/modalidades', label: 'Modalidades', icon: mdiMedal },
-  { to: '/bolao', label: 'Bolão', icon: mdiDiceMultiple },
 ]
 
 const userMenuOpen = ref(false)
@@ -192,14 +189,6 @@ const todayCount = computed(() => matchesStore.today.length)
                   v-if="userMenuOpen"
                   class="absolute right-0 top-full z-30 mt-2 w-52 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1.5 shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
                 >
-                  <RouterLink
-                    to="/bolao/jogos"
-                    class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
-                    @click="closeUserMenu"
-                  >
-                    <MdiIcon :path="mdiTargetAccount" :size="17" />
-                    Meus palpites
-                  </RouterLink>
                   <button
                     type="button"
                     class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
@@ -213,8 +202,7 @@ const todayCount = computed(() => matchesStore.today.length)
               <div v-if="userMenuOpen" class="fixed inset-0 z-20" @click="closeUserMenu"></div>
             </div>
             <div v-else class="hidden items-center gap-2 lg:flex">
-              <RouterLink to="/login" class="btn-secondary min-h-11 px-4 py-2 text-sm">Entrar</RouterLink>
-              <RouterLink to="/cadastro" class="btn-primary min-h-11 px-4 py-2 text-sm">Criar conta</RouterLink>
+              <RouterLink to="/login" class="btn-primary min-h-11 px-4 py-2 text-sm">Entrar</RouterLink>
             </div>
 
             <button
@@ -304,19 +292,11 @@ const todayCount = computed(() => matchesStore.today.length)
             <template v-else>
               <RouterLink
                 to="/login"
-                class="flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                class="flex min-h-11 items-center gap-3 rounded-xl bg-accent-50 px-3 py-3 text-sm font-semibold text-accent-700 dark:bg-accent-500/10 dark:text-accent-400"
                 @click="ui.closeDrawer"
               >
                 <MdiIcon :path="mdiLoginVariant" :size="18" />
                 Entrar
-              </RouterLink>
-              <RouterLink
-                to="/cadastro"
-                class="flex min-h-11 items-center gap-3 rounded-xl bg-accent-50 px-3 py-3 text-sm font-semibold text-accent-700 dark:bg-accent-500/10 dark:text-accent-400"
-                @click="ui.closeDrawer"
-              >
-                <MdiIcon :path="mdiAccountCircle" :size="18" />
-                Criar conta
               </RouterLink>
             </template>
           </nav>

@@ -134,35 +134,6 @@ export interface User {
   groups: string[]
 }
 
-// ---------- Bolão ----------
-export interface Bet {
-  id: number
-  match: number
-  predicted_home: number
-  predicted_away: number
-  points: number | null
-  locked: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface RankingEntry {
-  position: number
-  user: {
-    id: number
-    name: string
-  }
-  total_points: number
-  bets_count: number
-  exact_count: number
-}
-
-export interface PoolSettings {
-  points_correct_result: number
-  points_exact_score: number
-  points_goal_difference: number
-}
-
 // ---------- Filtros de busca de jogos ----------
 export interface MatchFilters {
   date?: string

@@ -60,21 +60,6 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(email: string, name: string, password: string) {
-      this.loading = true
-      this.error = null
-      try {
-        await authService.register({ email, name, password })
-        // Backend não retorna token no cadastro — loga automaticamente em seguida.
-        await this.login(email, password)
-      } catch (err) {
-        this.error = err instanceof ApiError ? err.message : 'Erro ao criar conta.'
-        throw err
-      } finally {
-        this.loading = false
-      }
-    },
-
     async fetchMe() {
       const me = await authService.me()
       this.persistUser(me)

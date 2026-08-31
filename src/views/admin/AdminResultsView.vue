@@ -5,7 +5,6 @@ import { mdiChevronLeft, mdiChevronRight, mdiClipboardTextOutline, mdiMagnify } 
 import { useMatchesStore } from '@/stores/matches'
 import { useSportsStore } from '@/stores/sports'
 import { useTeamsStore } from '@/stores/teams'
-import { usePoolStore } from '@/stores/pool'
 import AdminResultCard from '@/components/AdminResultCard.vue'
 import FilterBar, { type QuickFilter } from '@/components/FilterBar.vue'
 import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
@@ -20,7 +19,6 @@ import type { MatchStatus } from '@/types'
 const matchesStore = useMatchesStore()
 const sportsStore = useSportsStore()
 const teamsStore = useTeamsStore()
-const poolStore = usePoolStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -99,12 +97,12 @@ function onJumpToPage(event: Event) {
 }
 
 const saveErrors = reactive<Record<number, string>>({})
-const savingMatchId = computed(() => poolStore.savingMatchId)
+const savingMatchId = computed(() => matchesStore.savingMatchId)
 
 async function onSaveResult(matchId: number, scores: { teamId: number; points: number }[]) {
   delete saveErrors[matchId]
   try {
-    const updated = await poolStore.setMatchResult(matchId, {
+    const updated = await matchesStore.setMatchResult(matchId, {
       scores: scores.map((s) => ({ team_id: s.teamId, points: s.points })),
     })
     const idx = matchesStore.list.findIndex((m) => m.id === matchId)

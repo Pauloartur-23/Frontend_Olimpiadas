@@ -6,24 +6,7 @@ export interface TokenPair {
   refresh: string
 }
 
-export interface RegisterPayload {
-  email: string
-  name: string
-  password: string
-}
-
-export interface RegisterResponse {
-  id: number
-  email: string
-  name: string
-}
-
 export const authService = {
-  async register(payload: RegisterPayload): Promise<RegisterResponse> {
-    const { data } = await api.post<RegisterResponse>('/registro/', payload)
-    return data
-  },
-
   async login(email: string, password: string): Promise<TokenPair> {
     const { data } = await api.post<TokenPair>('/token/', { email, password })
     return data

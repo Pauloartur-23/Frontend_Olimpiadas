@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { matchesService } from '@/services/matchesService'
+import { matchesService, type MatchResultPayload } from '@/services/matchesService'
 import type { Match, MatchFilters, PaginatedResponse } from '@/types'
 import { ApiError } from '@/services/api'
 
@@ -33,6 +33,9 @@ interface MatchesState {
   bySport: Match[]
   bySportLoading: boolean
   bySportError: string | null
+
+  savingMatchId: number | null
+  saveError: string | null
 }
 
 export const useMatchesStore = defineStore('matches', {
@@ -58,6 +61,9 @@ export const useMatchesStore = defineStore('matches', {
     bySport: [],
     bySportLoading: false,
     bySportError: null,
+
+    savingMatchId: null,
+    saveError: null,
   }),
   actions: {
     async fetchList(filters: MatchFilters = {}) {
@@ -134,6 +140,19 @@ export const useMatchesStore = defineStore('matches', {
         this.bySportError = err instanceof ApiError ? err.message : 'Erro ao carregar jogos da modalidade.'
       } finally {
         this.bySportLoading = false
+      }
+    },
+
+    async setMatchResult(matchId: number, payload: MatchResultPayload) {
+      this.savingMatchId = matchId
+      this.saveError = null
+      try {
+        return await matchesService.setMatchResult(matchId, payload)
+      } catch (err) {
+        this.saveError = err instanceof ApiError ? err.message : 'Erro ao salvar o resultado.'
+        throw err
+      } finally {
+        this.savingMatchId = null
       }
     },
   },

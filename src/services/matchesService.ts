@@ -5,6 +5,10 @@ import type { Match, MatchFilters, PaginatedResponse } from '@/types'
 // requisições ao agregar todas as páginas de um filtro.
 const MAX_PAGE_SIZE = 100
 
+export interface MatchResultPayload {
+  scores: { team_id: number; points: number }[]
+}
+
 export const matchesService = {
   async list(filters: MatchFilters = {}): Promise<PaginatedResponse<Match>> {
     const params: Record<string, string | number> = {}
@@ -49,6 +53,11 @@ export const matchesService = {
 
   async getById(id: number | string): Promise<Match> {
     const { data } = await api.get<Match>(`/jogos/${id}/`)
+    return data
+  },
+
+  async setMatchResult(matchId: number, payload: MatchResultPayload): Promise<Match> {
+    const { data } = await api.patch<Match>(`/jogos/${matchId}/resultado/`, payload)
     return data
   },
 }

@@ -24,25 +24,6 @@ const router = createRouter({
         { path: 'modalidades', name: 'sports', component: () => import('@/views/SportsView.vue') },
         { path: 'modalidades/:slug', name: 'sport-detail', component: () => import('@/views/SportDetailView.vue'), props: true },
         { path: 'login', name: 'login', component: () => import('@/views/LoginView.vue') },
-        { path: 'cadastro', name: 'register', component: () => import('@/views/RegisterView.vue') },
-        {
-          path: 'bolao',
-          name: 'pool-home',
-          component: () => import('@/views/pool/PoolHomeView.vue'),
-          meta: { requiresAuth: true },
-        },
-        {
-          path: 'bolao/jogos',
-          name: 'pool-matches',
-          component: () => import('@/views/pool/PoolMatchesView.vue'),
-          meta: { requiresAuth: true },
-        },
-        {
-          path: 'bolao/ranking',
-          name: 'pool-ranking',
-          component: () => import('@/views/pool/PoolRankingView.vue'),
-          meta: { requiresAuth: true },
-        },
         {
           path: 'admin/resultados',
           name: 'admin-results',
