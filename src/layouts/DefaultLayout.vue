@@ -32,14 +32,17 @@ const { darkMode, toggleDarkMode } = useDarkMode()
 const route = useRoute()
 const router = useRouter()
 
-const navLinks = [
+// "Classificação" só aparece no menu para quem está logado — a página em
+// si já é restrita (ver router e StandingsView), isso só evita mostrar um
+// link que levaria a um redirect para /login.
+const navLinks = computed(() => [
   { to: '/', label: 'Início', icon: mdiHome },
   { to: '/jogos', label: 'Jogos', icon: mdiFormatListBulleted },
   { to: '/hoje', label: 'Hoje', icon: mdiClockOutline },
   { to: '/equipes', label: 'Equipes', icon: mdiShieldAccount },
-  { to: '/classificacao', label: 'Classificação', icon: mdiTrophy },
+  ...(auth.isAuthenticated ? [{ to: '/classificacao', label: 'Classificação', icon: mdiTrophy }] : []),
   { to: '/modalidades', label: 'Modalidades', icon: mdiMedal },
-]
+])
 
 const userMenuOpen = ref(false)
 function toggleUserMenu() {
@@ -54,12 +57,12 @@ function onLogout() {
   router.push('/')
 }
 
-const bottomNavLinks = [
+const bottomNavLinks = computed(() => [
   { to: '/', label: 'Início', icon: mdiHome },
   { to: '/jogos', label: 'Jogos', icon: mdiFormatListBulleted },
-  { to: '/classificacao', label: 'Ranking', icon: mdiTrophy },
+  ...(auth.isAuthenticated ? [{ to: '/classificacao', label: 'Ranking', icon: mdiTrophy }] : []),
   { to: '/equipes', label: 'Equipes', icon: mdiShieldAccount },
-]
+])
 
 const isActive = (path: string) => (path === '/' ? route.path === '/' : route.path.startsWith(path))
 const currentYear = computed(() => new Date().getFullYear())
@@ -316,7 +319,7 @@ const todayCount = computed(() => matchesStore.today.length)
 
     <!-- Bottom nav (mobile/tablet) -->
     <nav class="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur lg:hidden dark:border-neutral-800 dark:bg-neutral-950/95">
-      <div class="grid grid-cols-5">
+      <div class="grid" :style="{ gridTemplateColumns: `repeat(${bottomNavLinks.length + 1}, minmax(0, 1fr))` }">
         <RouterLink
           v-for="link in bottomNavLinks"
           :key="link.to"

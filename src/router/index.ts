@@ -20,7 +20,12 @@ const router = createRouter({
         { path: 'hoje', name: 'today', component: () => import('@/views/TodayView.vue') },
         { path: 'equipes', name: 'teams', component: () => import('@/views/TeamsView.vue') },
         { path: 'equipes/:slug', name: 'team-detail', component: () => import('@/views/TeamDetailView.vue'), props: true },
-        { path: 'classificacao', name: 'standings', component: () => import('@/views/StandingsView.vue') },
+        {
+          path: 'classificacao',
+          name: 'standings',
+          component: () => import('@/views/StandingsView.vue'),
+          meta: { requiresAuth: true },
+        },
         { path: 'modalidades', name: 'sports', component: () => import('@/views/SportsView.vue') },
         { path: 'modalidades/:slug', name: 'sport-detail', component: () => import('@/views/SportDetailView.vue'), props: true },
         { path: 'login', name: 'login', component: () => import('@/views/LoginView.vue') },
