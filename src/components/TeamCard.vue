@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { mdiLockOutline } from '@mdi/js'
 import type { Team } from '@/types'
 import TeamBadge from './TeamBadge.vue'
+import MdiIcon from './MdiIcon.vue'
 
 defineProps<{ team: Team }>()
 </script>
@@ -33,7 +35,8 @@ defineProps<{ team: Team }>()
         <p class="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Derrotas</p>
       </div>
       <div>
-        <p class="font-numeric text-lg font-extrabold text-accent-600 dark:text-accent-400">{{ team.points }}</p>
+        <p v-if="team.points !== undefined" class="font-numeric text-lg font-extrabold text-accent-600 dark:text-accent-400">{{ team.points }}</p>
+        <MdiIcon v-else :path="mdiLockOutline" :size="16" class="mx-auto text-neutral-400" />
         <p class="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Pontos</p>
       </div>
     </div>

@@ -10,10 +10,12 @@ import {
   mdiCloseCircleOutline,
   mdiEqualBox,
   mdiGamepadVariantOutline,
+  mdiLockOutline,
   mdiStarFourPoints,
   mdiTrophyVariant,
 } from '@mdi/js'
 import { useTeamsStore } from '@/stores/teams'
+import { useAuthStore } from '@/stores/auth'
 import TeamBadge from '@/components/TeamBadge.vue'
 import StatusPill from '@/components/StatusPill.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
@@ -26,6 +28,7 @@ import { sportIcon } from '@/utils/sportIcons'
 
 const props = defineProps<{ slug: string }>()
 const teamsStore = useTeamsStore()
+const auth = useAuthStore()
 
 function load() {
   teamsStore.fetchTeamBySlug(props.slug)
@@ -71,9 +74,16 @@ const stats = [
         <SectionHeader title="Estatísticas" :icon="mdiChartBar" />
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <div v-for="stat in stats" :key="stat.key" class="card flex flex-col items-center gap-1 p-4 text-center">
-            <MdiIcon :path="stat.icon" :size="18" class="text-accent-500 dark:text-accent-400" />
-            <p class="font-numeric text-2xl font-extrabold text-accent-600 dark:text-accent-400">{{ teamsStore.currentTeam[stat.key] }}</p>
-            <p class="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{{ stat.label }}</p>
+            <template v-if="stat.key === 'points' && !auth.isAuthenticated">
+              <MdiIcon :path="mdiLockOutline" :size="18" class="text-neutral-400" />
+              <p class="text-2xl font-extrabold text-neutral-300 dark:text-neutral-600">—</p>
+              <RouterLink to="/login" class="text-xs font-semibold text-accent-600 hover:underline dark:text-accent-400">Entrar para ver</RouterLink>
+            </template>
+            <template v-else>
+              <MdiIcon :path="stat.icon" :size="18" class="text-accent-500 dark:text-accent-400" />
+              <p class="font-numeric text-2xl font-extrabold text-accent-600 dark:text-accent-400">{{ teamsStore.currentTeam[stat.key] }}</p>
+              <p class="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">{{ stat.label }}</p>
+            </template>
           </div>
         </div>
       </section>

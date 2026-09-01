@@ -19,7 +19,9 @@ export interface Team {
   wins: number
   losses: number
   draws: number
-  points: number
+  // Ausente quando o usuário não está autenticado (ver `TeamSerializer.to_representation`
+  // no backend) — a pontuação da equipe é restrita, igual à Classificação Geral.
+  points?: number
 }
 
 // Jogo "resumido" como devolvido dentro de /equipes/<slug>/ (upcoming_matches).
