@@ -6,14 +6,12 @@ import {
   mdiChevronRight,
   mdiClockOutline,
   mdiFlagCheckered,
-  mdiLockOutline,
   mdiMedal,
   mdiRecordCircle,
   mdiTrophy,
 } from '@mdi/js'
 import { useMatchesStore } from '@/stores/matches'
 import { useStandingsStore } from '@/stores/standings'
-import { useAuthStore } from '@/stores/auth'
 import { useCountdown } from '@/composables/useCountdown'
 import { rankBadgeClass, rankBorderClass } from '@/utils/rank'
 import MatchCard from '@/components/MatchCard.vue'
@@ -26,7 +24,6 @@ import MdiIcon from '@/components/MdiIcon.vue'
 
 const matchesStore = useMatchesStore()
 const standingsStore = useStandingsStore()
-const auth = useAuthStore()
 
 const EVENT_START = new Date(2026, 8, 1, 8, 0, 0) // 01/09/2026 08:00
 const EVENT_END = new Date(2026, 8, 3, 23, 59, 59) // 03/09/2026 fim do dia
@@ -46,9 +43,7 @@ function loadAll() {
   matchesStore.fetchLive()
   matchesStore.fetchToday()
   matchesStore.fetchRecentResults()
-  // Classificação é restrita a usuários logados — não tenta buscar (evita
-  // um 401 esperado) quando ninguém está autenticado.
-  if (auth.isAuthenticated) standingsStore.fetchStandings()
+  standingsStore.fetchStandings()
 }
 
 onMounted(loadAll)
@@ -156,17 +151,7 @@ onMounted(loadAll)
           </RouterLink>
         </template>
       </SectionHeader>
-      <EmptyState
-        v-if="!auth.isAuthenticated"
-        title="Classificação restrita"
-        message="Entre na sua conta para ver a classificação geral das equipes."
-        :icon="mdiLockOutline"
-      >
-        <template #action>
-          <RouterLink to="/login" class="btn-primary inline-flex">Entrar</RouterLink>
-        </template>
-      </EmptyState>
-      <LoadingSkeleton v-else-if="standingsStore.loading" variant="row" :count="5" />
+      <LoadingSkeleton v-if="standingsStore.loading" variant="row" :count="5" />
       <ErrorState v-else-if="standingsStore.error" :message="standingsStore.error" @retry="() => standingsStore.fetchStandings(true)" />
       <EmptyState v-else-if="top5Standings.length === 0" title="Classificação indisponível" message="A tabela de classificação ainda não foi publicada." :icon="mdiTrophy" />
       <div v-else class="card overflow-hidden">

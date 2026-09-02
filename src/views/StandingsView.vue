@@ -14,7 +14,11 @@ import MdiIcon from '@/components/MdiIcon.vue'
 const standingsStore = useStandingsStore()
 
 onMounted(() => {
-  standingsStore.fetchStandings()
+  // Sempre força a busca ao entrar na página: a classificação muda a
+  // cada resultado lançado pela organização, então não faz sentido
+  // reaproveitar o cache da store entre visitas (mesmo padrão da
+  // página de equipe, que sempre refaz o fetch — ver TeamDetailView).
+  standingsStore.fetchStandings(true)
 })
 </script>
 

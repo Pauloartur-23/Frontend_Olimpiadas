@@ -38,8 +38,32 @@ export interface TeamUpcomingMatch {
   status: MatchStatus
 }
 
+// Uma colocação premiada (1º/2º/3º) da equipe em uma prova — só provas
+// com pódio decidido aparecem aqui (ver `TeamMedalSerializer` no backend).
+export interface TeamMedal {
+  position: 1 | 2 | 3
+  category: string
+  category_display: string
+  prova: string
+}
+
 export interface TeamDetail extends Team {
   upcoming_matches: TeamUpcomingMatch[]
+  medals: TeamMedal[]
+}
+
+// Uma linha do pódio de uma prova sem confronto par-a-par (Laço, Uno,
+// Xadrez, Pife, Desfile de Abertura...) — GET /api/colocacoes/?label=.
+export interface EventPlacementEntry {
+  id: number
+  category: string
+  label: string
+  team: MatchTeamSummary
+  // `null` = colocação informativa (ex.: semifinalista eliminada, sem
+  // disputa de 3º lugar) — não é pódio, só contexto.
+  position: 1 | 2 | 3 | null
+  notes: string
+  score: string | null
 }
 
 // ---------- Modalidade ----------

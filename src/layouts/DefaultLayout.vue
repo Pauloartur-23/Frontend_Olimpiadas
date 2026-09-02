@@ -32,15 +32,12 @@ const { darkMode, toggleDarkMode } = useDarkMode()
 const route = useRoute()
 const router = useRouter()
 
-// "Classificação" só aparece no menu para quem está logado — a página em
-// si já é restrita (ver router e StandingsView), isso só evita mostrar um
-// link que levaria a um redirect para /login.
 const navLinks = computed(() => [
   { to: '/', label: 'Início', icon: mdiHome },
   { to: '/jogos', label: 'Jogos', icon: mdiFormatListBulleted },
   { to: '/hoje', label: 'Hoje', icon: mdiClockOutline },
   { to: '/equipes', label: 'Equipes', icon: mdiShieldAccount },
-  ...(auth.isAuthenticated ? [{ to: '/classificacao', label: 'Classificação', icon: mdiTrophy }] : []),
+  { to: '/classificacao', label: 'Classificação', icon: mdiTrophy },
   { to: '/modalidades', label: 'Modalidades', icon: mdiMedal },
 ])
 
@@ -60,7 +57,7 @@ function onLogout() {
 const bottomNavLinks = computed(() => [
   { to: '/', label: 'Início', icon: mdiHome },
   { to: '/jogos', label: 'Jogos', icon: mdiFormatListBulleted },
-  ...(auth.isAuthenticated ? [{ to: '/classificacao', label: 'Ranking', icon: mdiTrophy }] : []),
+  { to: '/classificacao', label: 'Ranking', icon: mdiTrophy },
   { to: '/equipes', label: 'Equipes', icon: mdiShieldAccount },
 ])
 
