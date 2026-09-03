@@ -155,5 +155,18 @@ export const useMatchesStore = defineStore('matches', {
         this.savingMatchId = null
       }
     },
+
+    async addTeam(matchId: number, teamId: number) {
+      this.savingMatchId = matchId
+      this.saveError = null
+      try {
+        return await matchesService.addTeam(matchId, teamId)
+      } catch (err) {
+        this.saveError = err instanceof ApiError ? err.message : 'Erro ao adicionar a equipe.'
+        throw err
+      } finally {
+        this.savingMatchId = null
+      }
+    },
   },
 })

@@ -112,6 +112,10 @@ export interface Match {
   // definido na fonte oficial — nesses casos a API manda `null` nos dois.
   date: string | null // YYYY-MM-DD | null
   time: string | null // HH:mm[:ss] | null
+  // Só preenchido em jogos que ocupam um intervalo (ex.: Pique-Bandeira,
+  // Gincana — todas as equipes disputando ao mesmo tempo). `null` na
+  // maioria dos jogos (par-a-par, sem hora de término definida).
+  end_time: string | null
   phase: string
   teams: MatchTeamSummary[]
   note: string | null

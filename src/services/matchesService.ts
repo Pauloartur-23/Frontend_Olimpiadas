@@ -60,4 +60,14 @@ export const matchesService = {
     const { data } = await api.patch<Match>(`/jogos/${matchId}/resultado/`, payload)
     return data
   },
+
+  /**
+   * Adiciona manualmente uma equipe à partida — usado quando o avanço
+   * automático de chaveamento não consegue decidir sozinho (empate
+   * persistente mesmo após o critério de desempate por saldo de placar).
+   */
+  async addTeam(matchId: number, teamId: number): Promise<Match> {
+    const { data } = await api.patch<Match>(`/jogos/${matchId}/adicionar_equipe/`, { team_id: teamId })
+    return data
+  },
 }

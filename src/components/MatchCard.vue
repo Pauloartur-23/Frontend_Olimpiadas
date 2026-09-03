@@ -6,7 +6,7 @@ import type { Match } from '@/types'
 import TeamBadge from './TeamBadge.vue'
 import StatusPill from './StatusPill.vue'
 import MdiIcon from './MdiIcon.vue'
-import { formatDateShort, formatTime, hasScheduledDateTime, isMatchUpcoming } from '@/utils/date'
+import { formatDateShort, formatTimeRange, hasScheduledDateTime, isMatchUpcoming } from '@/utils/date'
 import { sportIcon } from '@/utils/sportIcons'
 
 const props = withDefaults(
@@ -146,7 +146,7 @@ const isScheduled = computed(() => hasScheduledDateTime(props.match.date, props.
     <div class="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
       <span v-if="isScheduled" class="flex items-center gap-1">
         <MdiIcon :path="mdiClockOutline" :size="14" />
-        <span v-if="showDate">{{ formatDateShort(match.date) }} · </span>{{ formatTime(match.time) }}
+        <span v-if="showDate">{{ formatDateShort(match.date) }} · </span>{{ formatTimeRange(match.time, match.end_time) }}
       </span>
       <span v-else class="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
         <MdiIcon :path="mdiCalendarQuestion" :size="14" />

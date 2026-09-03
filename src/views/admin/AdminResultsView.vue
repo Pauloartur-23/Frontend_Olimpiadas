@@ -111,6 +111,17 @@ async function onSaveResult(matchId: number, scores: { teamId: number; points: n
     saveErrors[matchId] = err instanceof ApiError ? err.message : 'Não foi possível salvar o resultado.'
   }
 }
+
+async function onAddTeam(matchId: number, teamId: number) {
+  delete saveErrors[matchId]
+  try {
+    const updated = await matchesStore.addTeam(matchId, teamId)
+    const idx = matchesStore.list.findIndex((m) => m.id === matchId)
+    if (idx >= 0) matchesStore.list.splice(idx, 1, updated)
+  } catch (err) {
+    saveErrors[matchId] = err instanceof ApiError ? err.message : 'Não foi possível adicionar a equipe.'
+  }
+}
 </script>
 
 <template>
@@ -148,9 +159,11 @@ async function onSaveResult(matchId: number, scores: { teamId: number; points: n
           v-for="m in matchesStore.list"
           :key="m.id"
           :match="m"
+          :teams="teamsStore.teams"
           :saving="savingMatchId === m.id"
           :error-message="saveErrors[m.id]"
           @save="(scores) => onSaveResult(m.id, scores)"
+          @add-team="(teamId) => onAddTeam(m.id, teamId)"
         />
       </div>
 

@@ -37,6 +37,13 @@ export function formatTime(time: string | null | undefined): string {
   return time?.slice(0, 5) ?? ''
 }
 
+/** "12:30" ou, quando `endTime` está definido (ex: Pique-Bandeira, Gincana), "12:30 – 14:00". */
+export function formatTimeRange(time: string | null | undefined, endTime: string | null | undefined): string {
+  const start = formatTime(time)
+  const end = formatTime(endTime)
+  return end ? `${start} – ${end}` : start
+}
+
 export function formatDateShort(date: string | null | undefined): string {
   if (!date) return ''
   const [y, m, d] = date.split('-').map(Number)

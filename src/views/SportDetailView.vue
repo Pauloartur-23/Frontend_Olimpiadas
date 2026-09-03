@@ -58,6 +58,13 @@ watch(() => props.slug, load)
 
 const podiumPlaces = computed(() => podium.value.filter((p) => p.position !== null))
 
+// Campeã(s) via pódio (Laço, Uno, Xadrez, Pife, Truco, Brawl Stars...):
+// modalidades sem confronto par-a-par, cuja colocação é lançada direto
+// pela organização (`EventPlacement`) em vez de derivada de `Match`.
+// Lista (não só a 1ª equipe) porque a posição não é mais exclusiva de
+// uma equipe — um empate real em 1º lugar mostraria mais de uma aqui.
+const podiumChampions = computed(() => podiumPlaces.value.filter((p) => p.position === 1))
+
 // Classificação simples derivada dos jogos finalizados desta modalidade.
 interface SimpleStanding {
   id: number
@@ -68,21 +75,21 @@ interface SimpleStanding {
   losses: number
   draws: number
   points: number
+  // Saldo de placar (pontos feitos - pontos sofridos, somado jogo a jogo)
+  // — critério de desempate quando duas equipes têm os mesmos pontos
+  // (mesmo cálculo do backend, ver `matches.bracket._score_difference`).
+  saldo: number
 }
 
-// Critério de "campeão": se a modalidade tem uma Final disputada
-// (finalizada), o topo da classificação é o resultado dessa Final —
-// não a soma de vitórias em todas as fases (quartas/semis também
-// contam pontos, o que pode empurrar quem perdeu a Final para cima só
-// por ter vencido mais jogos nas fases anteriores). Sem Final (ex:
-// Truco, Uno, Xadrez, Pife — rodízio/todos-contra-todos), o critério é
-// a classificação da fase de grupo, que aqui já é a soma de pontos de
-// todos os jogos finalizados (não há outra fase para conflitar).
-const derivedStandings = computed<SimpleStanding[]>(() => {
+// Agrega vitórias/empates/derrotas/pontos/saldo de uma lista de jogos já
+// finalizados — reaproveitado tanto pela classificação agregada da
+// modalidade (usada só para achar a campeã, não mais exibida quando há
+// grupos) quanto pela classificação de cada grupo (Grupo A/Grupo B),
+// que precisa do mesmo cálculo escopado a um subconjunto de jogos.
+function buildStandings(matches: typeof matchesStore.bySport): SimpleStanding[] {
   const map = new Map<number, SimpleStanding>()
-  const finished = matchesStore.bySport.filter((m) => m.status === 'finished')
 
-  for (const match of finished) {
+  for (const match of matches) {
     for (const team of match.teams) {
       if (!map.has(team.id)) {
         map.set(team.id, {
@@ -94,6 +101,7 @@ const derivedStandings = computed<SimpleStanding[]>(() => {
           losses: 0,
           draws: 0,
           points: 0,
+          saldo: 0,
         })
       }
     }
@@ -115,10 +123,44 @@ const derivedStandings = computed<SimpleStanding[]>(() => {
       } else {
         entry.losses += 1
       }
+      // Saldo: pontos feitos por esta equipe menos os pontos somados de
+      // todas as outras equipes do jogo (a maioria é 1x1, mas cobre
+      // também jogos com 3+ equipes tipo Pife/Uno).
+      const against = scores.filter((s) => s.team.id !== score.team.id).reduce((sum, s) => sum + s.points, 0)
+      entry.saldo += score.points - against
     }
   }
 
-  const standings = Array.from(map.values())
+  return Array.from(map.values()).sort((a, b) => b.points - a.points || b.saldo - a.saldo)
+}
+
+// Modalidades com fase de grupos (Basquete, Vôlei, Futsal, Queimada,
+// EA FC, Vôlei de Areia...): a classificação única "de toda a
+// modalidade" não faz sentido (equipes de grupos diferentes nunca se
+// enfrentaram) — usamos `groupAStandings`/`groupBStandings` em vez
+// disso (ver template). `derivedStandings`/`champion` seguem existindo
+// só para achar a campeã (resultado da Final), não são mais exibidos
+// como tabela quando `hasGroups` é true.
+const hasGroups = computed(() => matchesStore.bySport.some((m) => m.phase === 'Grupo A' || m.phase === 'Grupo B'))
+
+const groupAStandings = computed(() =>
+  buildStandings(matchesStore.bySport.filter((m) => m.status === 'finished' && m.phase === 'Grupo A')),
+)
+const groupBStandings = computed(() =>
+  buildStandings(matchesStore.bySport.filter((m) => m.status === 'finished' && m.phase === 'Grupo B')),
+)
+
+// Critério de "campeão": se a modalidade tem uma Final disputada
+// (finalizada), o topo da classificação é o resultado dessa Final —
+// não a soma de vitórias em todas as fases (quartas/semis também
+// contam pontos, o que pode empurrar quem perdeu a Final para cima só
+// por ter vencido mais jogos nas fases anteriores). Sem Final (ex:
+// Truco, Uno, Xadrez, Pife — rodízio/todos-contra-todos), o critério é
+// a classificação da fase de grupo, que aqui já é a soma de pontos de
+// todos os jogos finalizados (não há outra fase para conflitar).
+const derivedStandings = computed<SimpleStanding[]>(() => {
+  const finished = matchesStore.bySport.filter((m) => m.status === 'finished')
+  const standings = buildStandings(finished)
 
   const finalMatch = finished.find((m) => m.phase === 'Final')
   const finalScores = finalMatch?.scores ?? []
@@ -134,11 +176,12 @@ const derivedStandings = computed<SimpleStanding[]>(() => {
     return standings.sort((a, b) => {
       const rank = (id: number) => (id === championId ? 0 : runnerUpIds.has(id) ? 1 : 2)
       const diff = rank(a.id) - rank(b.id)
-      return diff !== 0 ? diff : b.points - a.points
+      if (diff !== 0) return diff
+      return b.points - a.points || b.saldo - a.saldo
     })
   }
 
-  return standings.sort((a, b) => b.points - a.points)
+  return standings
 })
 
 // Equipe campeã da modalidade, quando já é possível afirmar isso com
@@ -168,7 +211,7 @@ const champion = computed<SimpleStanding | null>(() => {
   if (hasPendingMatches) return null
   const [first, second] = derivedStandings.value
   if (!first) return null
-  if (second && second.points === first.points) return null
+  if (second && second.points === first.points && second.saldo === first.saldo) return null
   return first
 })
 
@@ -216,7 +259,79 @@ const undatedMatches = computed(() => matchesStore.bySport.filter((m) => !hasSch
         <TeamBadge :name="champion.name" :color="champion.color" size="md" />
       </RouterLink>
 
-      <section v-if="derivedStandings.length > 0">
+      <!-- Modalidades sem jogos (Laço, Uno, Xadrez, Pife, Truco, Brawl Stars...):
+           campeã vem do pódio (EventPlacement), não de Match/derivedStandings. -->
+      <component
+        :is="podiumChampions.length === 1 ? 'RouterLink' : 'div'"
+        v-if="!matchesStore.bySportLoading && matchesStore.bySport.length === 0 && podiumChampions.length > 0"
+        :to="podiumChampions.length === 1 ? `/equipes/${podiumChampions[0]!.team.slug}` : undefined"
+        class="card flex items-center gap-4 border-l-4 border-amber-400 bg-amber-50 p-5 dark:border-amber-500 dark:bg-amber-500/10"
+        :class="podiumChampions.length === 1 ? 'card-hover' : ''"
+      >
+        <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-600 dark:text-amber-400">
+          <MdiIcon :path="mdiCrown" :size="30" />
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            {{ podiumChampions.length > 1 ? 'Campeãs da modalidade (empate)' : 'Campeã da modalidade' }}
+          </p>
+          <p class="truncate text-xl font-extrabold">{{ podiumChampions.map((p) => p.team.name).join(' e ') }}</p>
+        </div>
+        <div class="flex shrink-0 -space-x-2">
+          <TeamBadge v-for="p in podiumChampions" :key="p.id" :name="p.team.name" :color="p.team.primary_color" size="md" />
+        </div>
+      </component>
+
+      <!-- Modalidades com fase de grupos: uma classificação por grupo em
+           vez de uma tabela única (equipes de grupos diferentes nunca se
+           enfrentaram, então não faz sentido ranqueá-las juntas). -->
+      <template v-if="hasGroups">
+        <section v-if="groupAStandings.length > 0">
+          <SectionHeader title="Classificação — Grupo A" :icon="mdiTrophy" />
+          <div class="card overflow-hidden">
+            <div
+              v-for="(s, idx) in groupAStandings"
+              :key="s.id"
+              class="flex items-center gap-3 border-b border-l-2 border-neutral-100 px-4 py-3 last:border-b-0 dark:border-neutral-800"
+              :class="rankBorderClass(idx + 1)"
+            >
+              <span
+                class="font-numeric flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-center text-xs font-bold"
+                :class="rankBadgeClass(idx + 1)"
+              >{{ idx + 1 }}</span>
+              <TeamBadge :name="s.name" :color="s.color" size="sm" />
+              <span class="flex-1 truncate font-semibold">{{ s.name }}</span>
+              <span class="hidden text-xs text-neutral-500 sm:block dark:text-neutral-400">{{ s.wins }}V {{ s.draws }}E {{ s.losses }}D</span>
+              <span class="font-numeric hidden text-xs text-neutral-400 sm:block dark:text-neutral-500">saldo {{ s.saldo > 0 ? '+' : '' }}{{ s.saldo }}</span>
+              <span class="font-numeric text-lg font-extrabold text-accent-600 dark:text-accent-400">{{ s.points }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="groupBStandings.length > 0">
+          <SectionHeader title="Classificação — Grupo B" :icon="mdiTrophy" />
+          <div class="card overflow-hidden">
+            <div
+              v-for="(s, idx) in groupBStandings"
+              :key="s.id"
+              class="flex items-center gap-3 border-b border-l-2 border-neutral-100 px-4 py-3 last:border-b-0 dark:border-neutral-800"
+              :class="rankBorderClass(idx + 1)"
+            >
+              <span
+                class="font-numeric flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-center text-xs font-bold"
+                :class="rankBadgeClass(idx + 1)"
+              >{{ idx + 1 }}</span>
+              <TeamBadge :name="s.name" :color="s.color" size="sm" />
+              <span class="flex-1 truncate font-semibold">{{ s.name }}</span>
+              <span class="hidden text-xs text-neutral-500 sm:block dark:text-neutral-400">{{ s.wins }}V {{ s.draws }}E {{ s.losses }}D</span>
+              <span class="font-numeric hidden text-xs text-neutral-400 sm:block dark:text-neutral-500">saldo {{ s.saldo > 0 ? '+' : '' }}{{ s.saldo }}</span>
+              <span class="font-numeric text-lg font-extrabold text-accent-600 dark:text-accent-400">{{ s.points }}</span>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <section v-else-if="derivedStandings.length > 0">
         <SectionHeader title="Classificação da modalidade" :icon="mdiTrophy" />
         <div class="card overflow-hidden">
           <div
@@ -232,6 +347,7 @@ const undatedMatches = computed(() => matchesStore.bySport.filter((m) => !hasSch
             <TeamBadge :name="s.name" :color="s.color" size="sm" />
             <span class="flex-1 truncate font-semibold">{{ s.name }}</span>
             <span class="hidden text-xs text-neutral-500 sm:block dark:text-neutral-400">{{ s.wins }}V {{ s.draws }}E {{ s.losses }}D</span>
+            <span class="font-numeric hidden text-xs text-neutral-400 sm:block dark:text-neutral-500">saldo {{ s.saldo > 0 ? '+' : '' }}{{ s.saldo }}</span>
             <span class="font-numeric text-lg font-extrabold text-accent-600 dark:text-accent-400">{{ s.points }}</span>
           </div>
         </div>
