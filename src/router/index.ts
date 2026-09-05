@@ -24,6 +24,7 @@ const router = createRouter({
           path: 'classificacao',
           name: 'standings',
           component: () => import('@/views/StandingsView.vue'),
+          meta: { requiresAuth: true },
         },
         { path: 'modalidades', name: 'sports', component: () => import('@/views/SportsView.vue') },
         { path: 'modalidades/:slug', name: 'sport-detail', component: () => import('@/views/SportDetailView.vue'), props: true },

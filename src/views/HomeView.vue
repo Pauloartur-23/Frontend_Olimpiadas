@@ -6,12 +6,14 @@ import {
   mdiChevronRight,
   mdiClockOutline,
   mdiFlagCheckered,
+  mdiLock,
   mdiMedal,
   mdiRecordCircle,
   mdiTrophy,
 } from '@mdi/js'
 import { useMatchesStore } from '@/stores/matches'
 import { useStandingsStore } from '@/stores/standings'
+import { useAuthStore } from '@/stores/auth'
 import { useCountdown } from '@/composables/useCountdown'
 import { rankBadgeClass, rankBorderClass } from '@/utils/rank'
 import MatchCard from '@/components/MatchCard.vue'
@@ -24,6 +26,7 @@ import MdiIcon from '@/components/MdiIcon.vue'
 
 const matchesStore = useMatchesStore()
 const standingsStore = useStandingsStore()
+const authStore = useAuthStore()
 
 const EVENT_START = new Date(2026, 8, 1, 8, 0, 0) // 01/09/2026 08:00
 const EVENT_END = new Date(2026, 8, 3, 23, 59, 59) // 03/09/2026 fim do dia
@@ -43,7 +46,9 @@ function loadAll() {
   matchesStore.fetchLive()
   matchesStore.fetchToday()
   matchesStore.fetchRecentResults()
-  standingsStore.fetchStandings()
+  // Classificação agora é privada (só pra quem está logado) — nem tenta
+  // buscar sem sessão, senão o back devolve 401 e a seção mostra erro.
+  if (authStore.isAuthenticated) standingsStore.fetchStandings()
 }
 
 onMounted(loadAll)
@@ -86,9 +91,9 @@ onMounted(loadAll)
           </p>
         </template>
         <template v-else>
-          <p class="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-bold text-emerald-300 ring-1 ring-inset ring-emerald-400/30">
-            <MdiIcon :path="mdiFlagCheckered" :size="18" />
-            O evento foi encerrado. Confira os resultados finais!
+          <p class="inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-4 py-2 text-sm font-bold text-amber-300 ring-1 ring-inset ring-amber-400/30">
+            <MdiIcon :path="mdiClockOutline" :size="18" />
+            As modalidades presenciais foram encerradas — ainda faltam os jogos online (League of Legends e Valorant).
           </p>
         </template>
       </div>
@@ -151,7 +156,17 @@ onMounted(loadAll)
           </RouterLink>
         </template>
       </SectionHeader>
-      <LoadingSkeleton v-if="standingsStore.loading" variant="row" :count="5" />
+      <EmptyState
+        v-if="!authStore.isAuthenticated"
+        title="Classificação privada"
+        message="Faça login para ver a classificação geral das equipes."
+        :icon="mdiLock"
+      >
+        <template #action>
+          <RouterLink to="/login?redirect=/classificacao" class="btn-primary">Entrar</RouterLink>
+        </template>
+      </EmptyState>
+      <LoadingSkeleton v-else-if="standingsStore.loading" variant="row" :count="5" />
       <ErrorState v-else-if="standingsStore.error" :message="standingsStore.error" @retry="() => standingsStore.fetchStandings(true)" />
       <EmptyState v-else-if="top5Standings.length === 0" title="Classificação indisponível" message="A tabela de classificação ainda não foi publicada." :icon="mdiTrophy" />
       <div v-else class="card overflow-hidden">

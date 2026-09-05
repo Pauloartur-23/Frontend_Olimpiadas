@@ -143,6 +143,15 @@ function buildStandings(matches: typeof matchesStore.bySport): SimpleStanding[] 
 // como tabela quando `hasGroups` é true.
 const hasGroups = computed(() => matchesStore.bySport.some((m) => m.phase === 'Grupo A' || m.phase === 'Grupo B'))
 
+// Algumas modalidades têm um `Match` cadastrado (aparece no cronograma,
+// com data/local) mas nenhum `MatchScore` — o resultado é só um pódio
+// lançado direto pela organização (`EventPlacement`), sem confronto
+// par-a-par de verdade (ex: Gincana, Pique-Bandeira: jogo único com as
+// 7 equipes "ao mesmo tempo", sem vencedor/perdedor par-a-par). Nesses
+// casos `derivedStandings`/`champion` (que dependem de `MatchScore`)
+// não têm o que calcular — o pódio (abaixo) é que manda.
+const hasRealScores = computed(() => matchesStore.bySport.some((m) => m.scores && m.scores.length > 0))
+
 const groupAStandings = computed(() =>
   buildStandings(matchesStore.bySport.filter((m) => m.status === 'finished' && m.phase === 'Grupo A')),
 )
@@ -259,11 +268,14 @@ const undatedMatches = computed(() => matchesStore.bySport.filter((m) => !hasSch
         <TeamBadge :name="champion.name" :color="champion.color" size="md" />
       </RouterLink>
 
-      <!-- Modalidades sem jogos (Laço, Uno, Xadrez, Pife, Truco, Brawl Stars...):
-           campeã vem do pódio (EventPlacement), não de Match/derivedStandings. -->
+      <!-- Modalidades sem placar por jogo (Laço, Uno, Xadrez, Pife, Truco,
+           Brawl Stars, Gincana, Pique-Bandeira...): campeã vem do pódio
+           (EventPlacement), não de Match/derivedStandings — vale tanto para
+           quem não tem `Match` cadastrado quanto para quem tem um jogo único
+           sem `MatchScore` (ver `hasRealScores`). -->
       <component
         :is="podiumChampions.length === 1 ? 'RouterLink' : 'div'"
-        v-if="!matchesStore.bySportLoading && matchesStore.bySport.length === 0 && podiumChampions.length > 0"
+        v-if="!matchesStore.bySportLoading && !hasRealScores && podiumChampions.length > 0"
         :to="podiumChampions.length === 1 ? `/equipes/${podiumChampions[0]!.team.slug}` : undefined"
         class="card flex items-center gap-4 border-l-4 border-amber-400 bg-amber-50 p-5 dark:border-amber-500 dark:bg-amber-500/10"
         :class="podiumChampions.length === 1 ? 'card-hover' : ''"
@@ -331,7 +343,7 @@ const undatedMatches = computed(() => matchesStore.bySport.filter((m) => !hasSch
         </section>
       </template>
 
-      <section v-else-if="derivedStandings.length > 0">
+      <section v-else-if="hasRealScores && derivedStandings.length > 0">
         <SectionHeader title="Classificação da modalidade" :icon="mdiTrophy" />
         <div class="card overflow-hidden">
           <div
@@ -353,9 +365,10 @@ const undatedMatches = computed(() => matchesStore.bySport.filter((m) => !hasSch
         </div>
       </section>
 
-      <!-- Modalidades sem confronto par-a-par (Laço, Uno, Xadrez, Pife...):
-           resultado é um pódio lançado direto pela organização, não jogos. -->
-      <section v-if="!matchesStore.bySportLoading && matchesStore.bySport.length === 0 && (podiumLoading || podiumError || podiumPlaces.length > 0)">
+      <!-- Modalidades sem placar por jogo (Laço, Uno, Xadrez, Pife, Gincana,
+           Pique-Bandeira...): resultado é um pódio lançado direto pela
+           organização, não derivado de `MatchScore`. -->
+      <section v-if="!matchesStore.bySportLoading && !hasRealScores && (podiumLoading || podiumError || podiumPlaces.length > 0)">
         <SectionHeader title="Pódio" :icon="mdiTrophy" />
         <LoadingSkeleton v-if="podiumLoading" :count="3" />
         <ErrorState v-else-if="podiumError" :message="podiumError" @retry="() => loadPodium(sportsStore.currentSport!.name)" />
