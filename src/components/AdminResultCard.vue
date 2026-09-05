@@ -28,7 +28,7 @@ const isEligible = computed(() => props.match.teams.length === 2)
 
 const availableTeams = computed(() => {
   const current = new Set(props.match.teams.map((t) => t.id))
-  return (props.teams ?? []).filter((t) => !current.has(t.id)).sort((a, b) => a.name.localeCompare(b, 'pt-BR'))
+  return (props.teams ?? []).filter((t) => !current.has(t.id)).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 })
 const selectedTeamId = ref<number | ''>('')
 
