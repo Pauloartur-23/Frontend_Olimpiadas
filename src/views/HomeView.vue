@@ -6,18 +6,11 @@ import {
   mdiChevronRight,
   mdiClockOutline,
   mdiFlagCheckered,
-  mdiLock,
-  mdiMedal,
   mdiRecordCircle,
-  mdiTrophy,
 } from '@mdi/js'
 import { useMatchesStore } from '@/stores/matches'
-import { useStandingsStore } from '@/stores/standings'
-import { useAuthStore } from '@/stores/auth'
 import { useCountdown } from '@/composables/useCountdown'
-import { rankBadgeClass, rankBorderClass } from '@/utils/rank'
 import MatchCard from '@/components/MatchCard.vue'
-import TeamBadge from '@/components/TeamBadge.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -25,8 +18,6 @@ import ErrorState from '@/components/ErrorState.vue'
 import MdiIcon from '@/components/MdiIcon.vue'
 
 const matchesStore = useMatchesStore()
-const standingsStore = useStandingsStore()
-const authStore = useAuthStore()
 
 const EVENT_START = new Date(2026, 8, 1, 8, 0, 0) // 01/09/2026 08:00
 const EVENT_END = new Date(2026, 8, 3, 23, 59, 59) // 03/09/2026 fim do dia
@@ -40,15 +31,10 @@ const countdownParts = computed(() => [
   { label: 'seg', value: remaining.value.seconds },
 ])
 
-const top5Standings = computed(() => standingsStore.standings.slice(0, 5))
-
 function loadAll() {
   matchesStore.fetchLive()
   matchesStore.fetchToday()
   matchesStore.fetchRecentResults()
-  // Classificação agora é privada (só pra quem está logado) — nem tenta
-  // buscar sem sessão, senão o back devolve 401 e a seção mostra erro.
-  if (authStore.isAuthenticated) standingsStore.fetchStandings()
 }
 
 onMounted(loadAll)
@@ -144,52 +130,6 @@ onMounted(loadAll)
       />
       <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <MatchCard v-for="m in matchesStore.recentResults.slice(0, 6)" :key="m.id" :match="m" />
-      </div>
-    </section>
-
-    <!-- Classificação -->
-    <section>
-      <SectionHeader title="Classificação geral" :icon="mdiTrophy">
-        <template #action>
-          <RouterLink to="/classificacao" class="inline-flex items-center gap-1 text-sm font-semibold text-accent-600 hover:underline dark:text-accent-400">
-            Ver tabela completa <MdiIcon :path="mdiChevronRight" :size="16" />
-          </RouterLink>
-        </template>
-      </SectionHeader>
-      <EmptyState
-        v-if="!authStore.isAuthenticated"
-        title="Classificação privada"
-        message="Faça login para ver a classificação geral das equipes."
-        :icon="mdiLock"
-      >
-        <template #action>
-          <RouterLink to="/login?redirect=/classificacao" class="btn-primary">Entrar</RouterLink>
-        </template>
-      </EmptyState>
-      <LoadingSkeleton v-else-if="standingsStore.loading" variant="row" :count="5" />
-      <ErrorState v-else-if="standingsStore.error" :message="standingsStore.error" @retry="() => standingsStore.fetchStandings(true)" />
-      <EmptyState v-else-if="top5Standings.length === 0" title="Classificação indisponível" message="A tabela de classificação ainda não foi publicada." :icon="mdiTrophy" />
-      <div v-else class="card overflow-hidden">
-        <RouterLink
-          v-for="s in top5Standings"
-          :key="s.team.id"
-          :to="`/equipes/${s.team.slug}`"
-          class="flex items-center gap-4 border-b border-l-2 border-neutral-100 px-4 py-3 transition-colors last:border-b-0 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/60"
-          :class="rankBorderClass(s.position)"
-        >
-          <span
-            class="font-numeric flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-center text-xs font-bold"
-            :class="rankBadgeClass(s.position)"
-          >{{ s.position }}</span>
-          <TeamBadge :name="s.team.name" :color="s.team.primary_color" :logo="s.team.logo" size="sm" />
-          <span class="flex-1 truncate font-semibold">{{ s.team.name }}</span>
-          <span class="hidden gap-3 text-xs text-neutral-500 sm:flex dark:text-neutral-400">
-            <span class="flex items-center gap-1"><MdiIcon :path="mdiMedal" :size="14" class="text-amber-500" />{{ s.gold }}</span>
-            <span class="flex items-center gap-1"><MdiIcon :path="mdiMedal" :size="14" class="text-neutral-400" />{{ s.silver }}</span>
-            <span class="flex items-center gap-1"><MdiIcon :path="mdiMedal" :size="14" class="text-amber-700" />{{ s.bronze }}</span>
-          </span>
-          <span class="font-numeric text-lg font-extrabold text-accent-600 dark:text-accent-400">{{ s.points }}</span>
-        </RouterLink>
       </div>
     </section>
   </div>

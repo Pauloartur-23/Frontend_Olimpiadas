@@ -13,7 +13,6 @@ import {
   mdiEqualBox,
   mdiGamepadVariantOutline,
   mdiMedal,
-  mdiStarFourPoints,
   mdiTrophyVariant,
 } from '@mdi/js'
 import { useTeamsStore } from '@/stores/teams'
@@ -37,12 +36,14 @@ function load() {
 onMounted(load)
 watch(() => props.slug, load)
 
+// "Pontos" (pontuação da Classificação Geral) foi removido daqui de
+// propósito — a classificação é privada agora, e mostrar o total de
+// pontos por equipe deixaria o ranking reconstituível sem login.
 const stats = [
   { key: 'games_played', label: 'Jogos', icon: mdiGamepadVariantOutline },
   { key: 'wins', label: 'Vitórias', icon: mdiTrophyVariant },
   { key: 'draws', label: 'Empates', icon: mdiEqualBox },
   { key: 'losses', label: 'Derrotas', icon: mdiCloseCircleOutline },
-  { key: 'points', label: 'Pontos', icon: mdiStarFourPoints },
 ] as const
 
 const MEDAL_GROUPS = [
@@ -110,7 +111,7 @@ function toggle(position: number) {
 
       <section>
         <SectionHeader title="Estatísticas" :icon="mdiChartBar" />
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div v-for="stat in stats" :key="stat.key" class="card flex flex-col items-center gap-1 p-4 text-center">
             <MdiIcon :path="stat.icon" :size="18" class="text-accent-500 dark:text-accent-400" />
             <p class="font-numeric text-2xl font-extrabold text-accent-600 dark:text-accent-400">{{ teamsStore.currentTeam[stat.key] }}</p>
